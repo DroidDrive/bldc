@@ -2039,7 +2039,7 @@ bool mcpwm_foc_measure_res_ind(float *res, float *ind, float *ld_lq_diff) {
 			motor->m_conf->foc_current_ki = ki_old;
 			return false;
 		}
-		if (i > (1.0 / r_tmp)) {
+		if (i > (3.5 / r_tmp)) {
 			i_last = i;
 			break;
 		}
@@ -2049,9 +2049,9 @@ bool mcpwm_foc_measure_res_ind(float *res, float *ind, float *ld_lq_diff) {
 		i_last = (motor->m_conf->l_current_max / 2.0);
 	}
 
-#ifdef HW_AXIOM_FORCE_HIGH_CURRENT_MEASUREMENTS
+//#ifdef HW_AXIOM_FORCE_HIGH_CURRENT_MEASUREMENTS
 	i_last = (motor->m_conf->l_current_max / 2.0);
-#endif
+//#endif
 
 	*res = mcpwm_foc_measure_resistance(i_last, 200, true);
 	if (*res != 0.0) {

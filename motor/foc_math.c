@@ -513,8 +513,8 @@ float foc_correct_encoder(float obs_angle, float enc_angle, float speed,
 	float rpm_abs = fabsf(RADPS2RPM_f(speed));
 
 	// Hysteresis 5 % of total speed
-	float hyst = sl_erpm * 0.05;
-	if (motor->m_using_encoder) {
+	float hyst = sl_erpm * 0.2;
+	/*if (motor->m_using_encoder) {
 		if (rpm_abs > (sl_erpm + hyst)) {
 			motor->m_using_encoder = false;
 		}
@@ -522,9 +522,23 @@ float foc_correct_encoder(float obs_angle, float enc_angle, float speed,
 		if (rpm_abs < (sl_erpm- hyst)) {
 			motor->m_using_encoder = true;
 		}
-	}
+	}*/
 
-	return motor->m_using_encoder ? enc_angle : obs_angle;
+	float max = sl_erpm + hyst;
+	float min = sl_erpm - hyst;
+	if (rpm_abs < (sl_erpm - hyst)){
+		motor->m_using_encoder = true;
+		return enc_angle;
+	} else if (rpm_abs > (sl_erpm + hyst)){
+		motor->m_using_encoder = false;
+		return obs_angle;
+	} else{
+		float percent = (rpm_abs - min) / (max - min);
+		return percent * obs_angle + (1.0f - percent) * enc_angle;		
+	}
+		
+
+	//return motor->m_using_encoder ? enc_angle : obs_angle;
 }
 
 float foc_correct_hall(float angle, float dt, motor_all_state_t *motor, int hall_val) {
