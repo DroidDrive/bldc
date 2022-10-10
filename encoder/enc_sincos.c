@@ -71,9 +71,13 @@ float enc_sincos_read_deg(ENCSINCOS_config_t *cfg) {
 			UTILS_LP_FAST(cfg->state.signal_above_max_error_rate, 0.0, timestep);
 			UTILS_LP_FAST(cfg->state.signal_low_error_rate, 0.0, timestep);
 
-			float angle_tmp = RAD2DEG_f(utils_fast_atan2(sin, cos));
-			UTILS_LP_FAST(angle, angle_tmp, cfg->filter_constant);
-			cfg->state.last_enc_angle = angle;
+			float angle_tmp_rad = utils_fast_atan2(sin, cos);
+			utils_norm_angle_rad(&angle_tmp_rad);
+			float angle_tmp_deg = RAD2DEG_f(angle_tmp_rad);
+			utils_norm_angle(&angle_tmp_deg);
+			UTILS_LP_FAST(cfg->state.last_enc_angle, angle_tmp_deg, cfg->filter_constant);
+			//cfg->state.last_enc_angle = angle;
+			angle = cfg->state.last_enc_angle;
 		}
 	}
 
