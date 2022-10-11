@@ -109,9 +109,11 @@ void utils_rotate_vector3(float *input, float *rotation, float *output, bool rev
  * @param filter_constant
  * Filter constant. Range 0.0 to 1.0, where 1.0 gives the unfiltered value.
  */
-#define UTILS_LP_FAST_360(value, sample, filter_constant)	( (((sample) - (value)) > 180.0 || ((sample) - (value)) < -180.0) ? \
-                                                            (value -= (filter_constant) * ((value) - ((sample) - 360.0))) : \
-                                                            (value -= (filter_constant) * ((value) - (sample))) )
+#define UTILS_LP_FAST_360(value, sample, filter_constant)	( ((sample) - (value)) > 180.0 ? \
+                                                            value -= (filter_constant) * ((value) - ((sample) + 360.0)) : \
+                                                            (((sample) - (value)) < -180.0 ? \
+                                                                (value -= (filter_constant) * ((value) - ((sample) - 360.0))) : \
+                                                                (value -= (filter_constant) * ((value) - (sample)))) )
 
 /**
  * A fast approximation of a moving average filter with N samples. See
