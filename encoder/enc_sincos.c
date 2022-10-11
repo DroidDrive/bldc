@@ -45,9 +45,13 @@ void enc_sincos_deinit(ENCSINCOS_config_t *cfg) {
 }
 
 float enc_sincos_read_deg(ENCSINCOS_config_t *cfg) {
-	float angle = 0.0;
-	float sin = ENCODER_SIN_VOLTS * cfg->s_gain - cfg->s_offset;
-	float cos = ENCODER_COS_VOLTS * cfg->c_gain - cfg->c_offset;
+	float sin = (ENCODER_SIN_VOLTS - cfg->s_offset) * cfg->s_gain;
+	float cos = (ENCODER_COS_VOLTS - cfg->c_offset) * cfg->c_gain;
+
+	UTILS_LP_FAST(cfg->state.sin_filter, sin, cfg->filter_constant);
+	UTILS_LP_FAST(cfg->state.cos_filter, cos, cfg->filter_constant);
+	sin = cfg->state.sin_filter;
+	cos = cfg->state.cos_filter;
 
 	float module = SQ(sin) + SQ(cos);
 
@@ -61,25 +65,14 @@ float enc_sincos_read_deg(ENCSINCOS_config_t *cfg) {
 		// signals vector outside of the valid area. Increase error count and discard measurement
 		++cfg->state.signal_above_max_error_cnt;
 		UTILS_LP_FAST(cfg->state.signal_above_max_error_rate, 1.0, timestep);
-		angle = cfg->state.last_enc_angle;
+	} else if (module < SQ(SINCOS_MIN_AMPLITUDE)) {
+		++cfg->state.signal_below_min_error_cnt;
+		UTILS_LP_FAST(cfg->state.signal_low_error_rate, 1.0, timestep);
 	} else {
-		if (module < SQ(SINCOS_MIN_AMPLITUDE)) {
-			++cfg->state.signal_below_min_error_cnt;
-			UTILS_LP_FAST(cfg->state.signal_low_error_rate, 1.0, timestep);
-			angle = cfg->state.last_enc_angle;
-		} else {
-			UTILS_LP_FAST(cfg->state.signal_above_max_error_rate, 0.0, timestep);
-			UTILS_LP_FAST(cfg->state.signal_low_error_rate, 0.0, timestep);
-
-			float angle_tmp_rad = utils_fast_atan2(sin, cos);
-			utils_norm_angle_rad(&angle_tmp_rad);
-			float angle_tmp_deg = RAD2DEG_f(angle_tmp_rad);
-			utils_norm_angle(&angle_tmp_deg);
-			UTILS_LP_FAST(cfg->state.last_enc_angle, angle_tmp_deg, cfg->filter_constant);
-			//cfg->state.last_enc_angle = angle;
-			angle = cfg->state.last_enc_angle;
-		}
+		UTILS_LP_FAST(cfg->state.signal_above_max_error_rate, 0.0, timestep);
+		UTILS_LP_FAST(cfg->state.signal_low_error_rate, 0.0, timestep);
+		cfg->state.last_enc_angle = RAD2DEG_f(utils_fast_atan2(sin, cos)) + 180.0;
 	}
 
-	return angle;
+	return cfg->state.last_enc_angle;
 }
