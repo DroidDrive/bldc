@@ -508,15 +508,18 @@ void foc_run_pid_control_speed(float dt, motor_all_state_t *motor) {
 	motor->m_iq_set = output * conf_now->lo_current_max * conf_now->l_current_max_scale;
 }
 
+
 float foc_correct_encoder(float obs_angle, float enc_angle, float speed,
 							 float sl_erpm, motor_all_state_t *motor) {
 	float rpm_abs = fabsf(RADPS2RPM_f(speed));
 
+	
 	// Hysteresis 5 % of total speed
 	float hyst = sl_erpm * 0.05;
 	if (motor->m_using_encoder) {
 		if (rpm_abs > (sl_erpm + hyst)) {
 			motor->m_using_encoder = false;
+			motor->enc_obs_diff = enc_angle - obs_angle;			
 		}
 	} else {
 		if (rpm_abs < (sl_erpm- hyst)) {
@@ -524,7 +527,7 @@ float foc_correct_encoder(float obs_angle, float enc_angle, float speed,
 		}
 	}
 
-	return motor->m_using_encoder ? enc_angle : obs_angle;
+	return motor->m_using_encoder ? enc_angle : (obs_angle + motor->enc_obs_diff);
 }
 
 float foc_correct_hall(float angle, float dt, motor_all_state_t *motor, int hall_val) {

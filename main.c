@@ -162,11 +162,11 @@ static THD_FUNCTION(periodic_thread, arg) {
 
 		switch (display_mode) {
 		case DISP_POS_MODE_ENCODER:
-			commands_send_rotor_pos(encoder_read_deg());
+			commands_send_rotor_pos(mcpwm_foc_get_phase_encoder());
 			break;
 
 		case DISP_POS_MODE_PID_POS:
-			commands_send_rotor_pos(mc_interface_get_pid_pos_now());
+			commands_send_rotor_pos(mcpwm_foc_get_phase());
 			break;
 
 		case DISP_POS_MODE_PID_POS_ERROR:

@@ -2410,6 +2410,9 @@ void mcpwm_foc_print_state(void) {
 	commands_printf("Vd:        %.2f", (double)get_motor_now()->m_motor_state.vd);
 	commands_printf("Vq:        %.2f", (double)get_motor_now()->m_motor_state.vq);
 	commands_printf("Phase:     %.2f", (double)get_motor_now()->m_motor_state.phase);
+	commands_printf("Phase Obs: %.2f", (double)get_motor_now()->m_phase_now_observer);
+	commands_printf("Phase Enc: %.2f", (double)get_motor_now()->m_phase_now_encoder);
+	commands_printf("Phase Dif: %.2f", (double)get_motor_now()->enc_obs_diff);
 	commands_printf("V_alpha:   %.2f", (double)get_motor_now()->m_motor_state.v_alpha);
 	commands_printf("V_beta:    %.2f", (double)get_motor_now()->m_motor_state.v_beta);
 	commands_printf("id:        %.2f", (double)get_motor_now()->m_motor_state.id);
@@ -2420,9 +2423,9 @@ void mcpwm_foc_print_state(void) {
 	commands_printf("iq_target: %.2f", (double)get_motor_now()->m_motor_state.iq_target);
 	commands_printf("i_abs:     %.2f", (double)get_motor_now()->m_motor_state.i_abs);
 	commands_printf("i_abs_flt: %.2f", (double)get_motor_now()->m_motor_state.i_abs_filter);
-	commands_printf("Obs_x1:    %.2f", (double)get_motor_now()->m_observer_state.x1);
-	commands_printf("Obs_x2:    %.2f", (double)get_motor_now()->m_observer_state.x2);
-	commands_printf("lambda_est:%.2f", (double)get_motor_now()->m_observer_state.lambda_est);
+	commands_printf("Obs_x1:    %.5f", (double)get_motor_now()->m_observer_state.x1);
+	commands_printf("Obs_x2:    %.5f", (double)get_motor_now()->m_observer_state.x2);
+	commands_printf("lambda_est:%.5f", (double)get_motor_now()->m_observer_state.lambda_est);
 	commands_printf("vd_int:    %.2f", (double)get_motor_now()->m_motor_state.vd_int);
 	commands_printf("vq_int:    %.2f", (double)get_motor_now()->m_motor_state.vq_int);
 	commands_printf("off_delay: %.2f", (double)get_motor_now()->m_current_off_delay);
@@ -2696,6 +2699,7 @@ void mcpwm_foc_adc_int_handler(void *p, uint32_t flags) {
 		phase_tmp -= conf_now->foc_encoder_offset;
 		utils_norm_angle((float*)&phase_tmp);
 		motor_now->m_phase_now_encoder = DEG2RAD_f(phase_tmp);
+		utils_norm_angle_rad(&(motor_now->m_phase_now_encoder));
 	}
 
 	if (motor_now->m_state == MC_STATE_RUNNING) {
