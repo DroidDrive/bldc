@@ -201,7 +201,28 @@ void terminal_process_string(char *str) {
 		commands_printf("Current 1 sample: %u", current1_samp);
 		commands_printf("Current 2 sample: %u\n", current2_samp);
 	} else if (strcmp(argv[0], "volt") == 0) {
-		commands_printf("Input voltage: %.2f\n", (double)mc_interface_get_input_voltage_filtered());
+		commands_printf("Input voltage:            %.2f", (double)mc_interface_get_input_voltage_filtered());
+		commands_printf("ADC_IND_CURR1 voltage:    %.2f", (double)ADC_VOLTS(ADC_IND_CURR1));
+		commands_printf("ADC_IND_CURR2 voltage:    %.2f", (double)ADC_VOLTS(ADC_IND_CURR2));		
+		commands_printf("ADC_IND_CURR3 voltage:    %.2f", (double)ADC_VOLTS(ADC_IND_CURR3));
+   
+		commands_printf("ADC_IND_SENS1 voltage:    %.2f", (double)ADC_VOLTS(ADC_IND_SENS1));
+		commands_printf("ADC_IND_SENS2 voltage:    %.2f", (double)ADC_VOLTS(ADC_IND_SENS2));		
+		commands_printf("ADC_IND_SENS3 voltage:    %.2f", (double)ADC_VOLTS(ADC_IND_SENS3));
+		
+		commands_printf("ADC_IND_VIN_SENS voltage: %.2f", (double)ADC_VOLTS(ADC_IND_VIN_SENS));
+
+		commands_printf("ADC1/SIN voltage:         %.2f", (double)ADC_VOLTS(ADC_IND_EXT));
+		commands_printf("ADC2/COS voltage:         %.2f", (double)ADC_VOLTS(ADC_IND_EXT2));
+
+		commands_printf("TEMP_MOS voltage:         %.2f", (double)ADC_VOLTS(ADC_IND_TEMP_MOS));
+		commands_printf("TEMP_MOTOR voltage:       %.2f", (double)ADC_VOLTS(ADC_IND_TEMP_MOTOR));
+		
+		commands_printf("ADC_IND_SHUTDOWN voltage: %.2f", (double)ADC_VOLTS(ADC_IND_SHUTDOWN));
+
+		commands_printf("ADC_IND_VREFINT voltage:  %.2f\n", (double)ADC_VOLTS(ADC_IND_VREFINT));	
+
+
 #ifdef HW_HAS_GATE_DRIVER_SUPPLY_MONITOR
 		commands_printf("Gate driver power supply output voltage: %.2f\n", (double)GET_GATE_DRIVER_SUPPLY_VOLTAGE());
 #endif
