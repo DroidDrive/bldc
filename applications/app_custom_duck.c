@@ -61,6 +61,8 @@ static float cos_max = 0.0;
 
 static float mean_filter_value = 0.0001;
 
+static float autocal_timeout = 10;
+
 static bool autocal_enabled = false;
 
 extern ENCSINCOS_config_t encoder_cfg_sincos;
@@ -107,6 +109,12 @@ static THD_FUNCTION(my_thread, arg) {
 
 	// Example of using the experiment plot
 	//chThdSleepMilliseconds(8000);
+	for (uint16_t i = 0; i < (5.0 / 0.01); i++){
+		timeout_reset(); // Reset timeout if everything is OK.
+		chThdSleepMilliseconds(10);
+	}
+	
+
 	commands_init_plot("Sample", "Voltage");
 	commands_plot_add_graph("SIN");
 	commands_plot_add_graph("COS");
@@ -147,9 +155,18 @@ static THD_FUNCTION(my_thread, arg) {
 		sin_mean = sin_mean * (1.0 - mean_filter_value) + mean_filter_value * sin;
 		cos_mean = cos_mean * (1.0 - mean_filter_value) + mean_filter_value * cos;
 
-		if (autocal_enabled){
-			encoder_cfg_sincos.s_offset = sin_mean + encoder_cfg_sincos.s_offset;
-			encoder_cfg_sincos.c_offset = cos_mean + encoder_cfg_sincos.c_offset;
+		if (autocal_timeout > 0) autocal_timeout--;
+		if (autocal_enabled && autocal_timeout == 0){
+			autocal_timeout = 10;
+			// back calculate measured offset to "real" voltage offset
+			float sin_offs_offs = sin_mean / encoder_cfg_sincos.s_gain;
+			float cos_offs_offs = cos_mean / encoder_cfg_sincos.c_gain;
+			encoder_cfg_sincos.s_offset += sin_offs_offs;
+			encoder_cfg_sincos.c_offset += cos_offs_offs;
+
+			// adjust filtered value to new offset
+			sin_mean -= sin_offs_offs;
+			cos_mean -= cos_offs_offs;
 		}
 
 		commands_plot_set_graph(0);
@@ -192,7 +209,18 @@ static void terminal_test(int argc, const char **argv) {
             }else{
 				autocal_enabled = false;
 				commands_printf("autocal disabled");
+				commands_printf("sin offset: %f", encoder_cfg_sincos.s_offset);
+				commands_printf("cos offset: %f", encoder_cfg_sincos.c_offset);
+
 			}
+        }	
+	} else if (argc == 4) {
+        if (strcmp(argv[1], "param") == 0){
+			sscanf(argv[2], "%f", &encoder_cfg_sincos.s_offset);
+			sscanf(argv[3], "%f", &encoder_cfg_sincos.c_offset);
+
+			commands_printf("new sin offset: %f", encoder_cfg_sincos.s_offset);
+			commands_printf("new cos offset: %f", encoder_cfg_sincos.c_offset);			
         }	
 	} else {
 	
@@ -200,7 +228,8 @@ static void terminal_test(int argc, const char **argv) {
 		module_max = 0.0;
 		module_min = 1000.0;
 
-		commands_printf("sin_mean: %.4f , cos_mean: %.4f", sin_mean + encoder_cfg_sincos.s_offset, cos_mean + encoder_cfg_sincos.c_offset);
+		commands_printf("sin_mean: %.6f , cos_mean: %.6f", sin_mean, cos_mean);
+		commands_printf("sin offs: %.6f , cos offs: %.6f", encoder_cfg_sincos.s_offset, encoder_cfg_sincos.c_offset);
 
 		commands_printf("sin ampl: %.4f , cos ampl: %.4f", sin_max - sin_min, cos_max - cos_min);
 		sin_min = 1000.0;
